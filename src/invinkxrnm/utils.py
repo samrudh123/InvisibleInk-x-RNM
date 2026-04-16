@@ -720,7 +720,7 @@ def rnm_sample(logits: torch.Tensor, epsilon: float, sensitivity: float, noise_t
 
     if noise_type == 'exponential':
         scale = (2 * sensitivity) / epsilon
-        m = Exponential(torch.tensor([1.0 / scale])).sample(logits.size()).to(logits.device)
+        m = Exponential(torch.tensor([1.0 / scale])).sample(logits.size).to(logits.device)
     
         # Report Noisy Max: Add noise to logits and take argmax
         noisy_logits = logits + m.squeeze()
