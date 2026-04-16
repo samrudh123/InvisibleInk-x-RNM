@@ -717,13 +717,26 @@ def rnm_sample(logits: torch.Tensor, epsilon: float, sensitivity: float, noise_t
         raise ValueError("sensitivity must be a positive number.")
     if noise_type not in ('exponential', 'laplace'):
         raise ValueError("noise_type must be 'exponential' or 'laplace'.")
+    
+    # Ensure logits is a torch tensor to avoid Numpy attribute errors
+    if not isinstance(logits, torch.Tensor):
+        logits = torch.tensor(logits)
 
     if noise_type == 'exponential':
-        scale = (2 * sensitivity) / epsilon
-        m = Exponential(torch.tensor([1.0 / scale])).sample(logits.size).to(logits.device)
+        scale = (2.0 * sensitivity) / epsilon
+        
+        # Use a scalar tensor and place it on the same device as logits
+        rate = torch.tensor(1.0 / scale, device=logits.device)
+        
+        # Use logits.shape instead of logits.size
+        m = Exponential(rate).sample(logits.shape)
     
         # Report Noisy Max: Add noise to logits and take argmax
-        noisy_logits = logits + m.squeeze()
+        noisy_logits = logits + m
+
+    # (Optional) Handle laplace noise here if you plan to use it later
+    elif noise_type == 'laplace':
+        raise NotImplementedError("Laplace noise is not yet implemented.")
 
     selected_index = torch.argmax(noisy_logits, dim=-1)
     return selected_index
